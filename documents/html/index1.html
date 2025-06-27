@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with 3D Fluffy BABLi</title>
+    <!-- === FAVICON LINE === -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/SaeedX302/file-storage-2/main/pictures/png/favicon.png">
+    
+    <style>
+        :root {
+            --mouse-x: 0;
+            --mouse-y: 0;
+            --bg-color: #f0e8d9;
+            --char-color-light: #ffffff;
+            --char-color-dark: #f5f1e6;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --accent-color: #c9bba8;
+            --text-color: #5c5248;
+            --eye-color: #6c5f53;
+            --ui-bg-color: rgba(255, 255, 255, 0.7);
+            --ui-border-color: #f5f1e6;
+            --body-bg: var(--bg-color);
+        }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--body-bg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            perspective: 1000px;
+            padding: 20px;
+            box-sizing: border-box;
+            transition: background 0.8s ease;
+        }
+        
+        #theme-switcher {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: var(--ui-bg-color);
+            border: 1px solid var(--ui-border-color);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+        #theme-switcher:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+        #theme-switcher svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--text-color);
+            transition: fill 0.8s ease;
+        }
+
+        .character-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.1s linear;
+            transform: rotateX(calc(var(--mouse-y) * -7deg)) rotateY(calc(var(--mouse-x) * 7deg));
+            transform-style: preserve-3d;
+            margin-bottom: 20px;
+        }
+
+        .character-body {
+            position: absolute;
+            width: 180px;
+            height: 200px;
+            background: radial-gradient(circle at 50% 40%, var(--char-color-light), var(--char-color-dark));
+            border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
+            cursor: pointer;
+            box-shadow:
+                inset 0 5px 25px rgba(255, 255, 255, 0.9),
+                0 10px 20px rgba(0,0,0,0.15),
+                0 0 5px var(--char-color-light),
+                0 0 15px var(--char-color-light),
+                0 0 25px var(--char-color-light),
+                0 0 35px var(--char-color-dark),
+                0 0 50px var(--char-color-dark),
+                0 0 75px var(--char-color-dark);
+            animation: float 8s ease-in-out infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translateZ(20px);
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.5s ease;
+        }
+        
+        .character-body.squish { transform: scale(1.05, 0.9) translateZ(20px); }
+        .character-body.theme-pink { --char-color-light: #fff0f5; --char-color-dark: #ffe4e1; }
+        .character-body.theme-blue { --char-color-light: #e0f7fa; --char-color-dark: #d4f1f4; }
+        .character-body.theme-green { --char-color-light: #f0fff0; --char-color-dark: #e0eee0; }
+
+        .name { font-size: 24px; font-weight: bold; color: var(--accent-color); text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5); user-select: none; position: relative; z-index: 2; transition: color 0.8s ease; }
+        .eyes { position: absolute; top: 65px; width: 100%; display: flex; justify-content: center; gap: 25px; z-index: 1; }
+        .eye { width: 24px; height: 24px; background: #fff; border-radius: 50%; border: 1px solid rgba(0,0,0,0.05); position: relative; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+        .pupil { position: absolute; width: 12px; height: 12px; background: var(--eye-color); border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); transition: transform 0.1s linear, background-color 0.8s ease; }
+        .pupil::after { content: ''; position: absolute; width: 4px; height: 4px; background: #fff; border-radius: 50%; top: 2px; left: 2px; opacity: 0.9; }
+        .lips { position: absolute; top: 95px; width: 25px; height: 12px; border-bottom: 3px solid var(--accent-color); border-radius: 0 0 15px 15px; opacity: 0.8; z-index: 1; transition: border-color 0.8s ease;}
+        .stomach { position: absolute; width: 100px; height: 80px; background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 70%); border-radius: 50%; bottom: 25px; display: flex; align-items: center; justify-content: center; }
+        .limb { position: absolute; background: var(--char-color-dark); box-shadow: 0 5px 10px var(--shadow-color); border-radius: 50px; transition: background 0.5s ease; z-index: -1; }
+        .arm { width: 40px; height: 65px; bottom: 70px; }
+        .arm.left { left: -20px; transform: rotate(25deg); }
+        .arm.right { right: -20px; transform: rotate(-25deg); }
+        .leg { width: 50px; height: 50px; bottom: -15px; }
+        .leg.left { left: 35px; transform: rotate(-15deg); }
+        .leg.right { right: 35px; transform: rotate(15deg); }
+        @keyframes float { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-15px) rotate(3deg); } }
+
+        /* --- UI & CHAT --- */
+        .chat-ui { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 10px; }
+        .action-buttons { display: flex; gap: 10px; width: 100%; }
+        .chat-box { 
+            background: var(--ui-bg-color); border: 1px solid var(--ui-border-color); border-radius: 15px; 
+            padding: 15px; height: 130px; overflow-y: auto; 
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.05); color: var(--text-color); font-size: 14px; 
+            line-height: 1.5; transition: all 0.8s ease; 
+        }
+        .message { margin-bottom: 10px; max-width: 85%; padding: 8px 12px; border-radius: 10px; }
+        .message.user { background-color: var(--accent-color); color: white; margin-left: auto; border-bottom-right-radius: 2px; transition: background-color 0.8s ease; }
+        .message.bot { background-color: var(--ui-bg-color); color: var(--text-color); margin-right: auto; border-bottom-left-radius: 2px; transition: background-color 0.8s ease, color 0.8s ease; }
+        .input-area { display: flex; gap: 10px; }
+        #user-input { flex-grow: 1; border: 1px solid var(--ui-border-color); border-radius: 10px; padding: 10px 15px; font-size: 14px; background: var(--ui-bg-color); color: var(--text-color); outline: none; transition: all 0.8s ease; }
+        #user-input:focus { box-shadow: 0 0 0 3px var(--accent-color); }
+        .action-button { border: none; background: var(--accent-color); color: white; border-radius: 10px; padding: 10px 15px; font-size: 14px; font-weight: bold; cursor: pointer; transition: all 0.4s ease; flex-grow: 1; position: relative; overflow: hidden;}
+        .action-button:hover { background-color: #b7a995; }
+        .action-button:active { transform: scale(0.97); }
+        .loading-spinner { display: none; margin: 10px auto; width: 24px; height: 24px; border: 3px solid rgba(183, 169, 149, 0.3); border-top-color: var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* --- WATER THEME --- */
+        .water-theme {
+            --body-bg: linear-gradient(170deg, #0d4a7f, #1e88e5, #42a5f5);
+            --accent-color: #81d4fa; --text-color: #ffffff;
+            --ui-bg-color: rgba(13, 71, 128, 0.4); --ui-border-color: rgba(255, 255, 255, 0.3);
+            --eye-color: #e1f5fe;
+        }
+        .water-theme::before { content: ''; position: absolute; top: 0; left: -100%; width: 200%; height: 100%; background: linear-gradient(45deg, rgba(13, 71, 128, 0.3), transparent 30%, transparent 70%, rgba(77, 182, 172, 0.3)); animation: wave 15s linear infinite; z-index: -1; }
+        @keyframes wave { 0% { transform: translateX(50%) rotate(0deg); } 100% { transform: translateX(-50%) rotate(360deg); } }
+        .water-theme .action-button { border: 1px solid rgba(255,255,255,0.4); background: rgba(0, 188, 212, 0.4); border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; }
+        .water-theme .action-button:hover { background: rgba(0, 188, 212, 0.6); border-radius: 50%; }
+        .water-theme .message.user { background-color: rgba(129, 212, 250, 0.8); }
+        .ripple { position: absolute; border-radius: 50%; background-color: rgba(255, 255, 255, 0.7); transform: scale(0); animation: ripple-effect 0.6s linear; }
+        @keyframes ripple-effect { to { transform: scale(4); opacity: 0; } }
+
+        /* === METAL THEME (NEW) === */
+        .metal-theme {
+            --body-bg: #2c3e50;
+            --accent-color: #bdc3c7; /* Silver */
+            --text-color: #ecf0f1; /* Light silver */
+            --ui-bg-color: rgba(44, 62, 80, 0.5);
+            --ui-border-color: rgba(189, 195, 199, 0.3);
+            --eye-color: #ecf0f1;
+        }
+        .metal-theme::after { /* Using ::after to not conflict with water theme */
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.05) 1px, transparent 1px, transparent 10px);
+            animation: metal-slide 80s linear infinite; z-index: -1;
+        }
+        @keyframes metal-slide { from { background-position: 0 0; } to { background-position: -400px 400px; } }
+        .metal-theme .action-button {
+            border: 1px solid var(--accent-color);
+            background: linear-gradient(145deg, #59616a, #464e59);
+            border-radius: 5px; /* Geometric shape */
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+        .metal-theme .action-button:hover { background: linear-gradient(145deg, #6b737d, #59616a); }
+        .metal-theme .action-button .ripple { display: none; } /* Disable ripple for metal theme */
+        .metal-theme .message.user { background-color: #34495e; border: 1px solid var(--accent-color); }
+
+
+    </style>
+</head>
+<body id="page-body" class="default">
+    <button id="theme-switcher">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2A10 10 0 0 0 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2zM0 12C0 5.4 5.4 0 12 0s12 5.4 12 12-5.4 12-12 12S0 18.6 0 12zm12-9a9 9 0 0 0-9 9 9 9 0 0 0 9 9z"/></svg>
+    </button>
+    <div class="character-container" id="character-container">
+        <div class="limb arm left"></div>
+        <div class="limb arm right"></div>
+        <div class="limb leg left"></div>
+        <div class="limb leg right"></div>
+        <div class="character-body" id="character-body">
+            <div class="eyes"><div class="eye"><div class="pupil"></div></div><div class="eye"><div class="pupil"></div></div></div>
+            <div class="lips"></div>
+            <div class="stomach"><div class="name">BABLI</div></div>
+        </div>
+    </div>
+    
+    <div class="chat-ui">
+        <div class="chat-box" id="chat-box">
+             <div class="message bot">Hi! I'm ცค๖Ɩⁱ. Mujy Kush Kho Ya Me Tumy Ik Khani Sunata Hu!</div>
+        </div>
+        <div class="loading-spinner" id="loading-spinner"></div>
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="Type Your Msg...">
+            <button class="action-button" id="send-button">Fluffy</button>
+        </div>
+        <div class="action-buttons">
+            <button class="action-button" id="story-button">Khani Sunao ✨</button>
+            <button class="action-button" id="color-button">Rang Badlo 🎨</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 3D & EYE LOGIC ---
+        const container = document.getElementById('character-container');
+        const pupils = document.querySelectorAll('.pupil');
+        document.body.addEventListener('mousemove', (e) => {
+            const rect = container.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2; const centerY = rect.top + rect.height / 2;
+            const mouseX = (e.clientX - centerX) / (window.innerWidth / 2); const mouseY = (e.clientY - centerY) / (window.innerHeight / 2);
+            container.style.setProperty('--mouse-x', mouseX); container.style.setProperty('--mouse-y', mouseY);
+            const pupilMoveX = mouseX * 4; const pupilMoveY = mouseY * 4;
+            pupils.forEach(pupil => { pupil.style.transform = `translate(-50%, -50%) translate(${pupilMoveX}px, ${pupilMoveY}px)`; });
+        });
+        document.body.addEventListener('mouseleave', () => { container.style.setProperty('--mouse-x', 0); container.style.setProperty('--mouse-y', 0); });
+
+        // --- GENERAL UI & GEMINI ---
+        const sendButton = document.getElementById('send-button');
+        const storyButton = document.getElementById('story-button');
+        const colorButton = document.getElementById('color-button');
+        const userInput = document.getElementById('user-input');
+        const chatBox = document.getElementById('chat-box');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const characterBody = document.getElementById('character-body');
+
+        // SQUISH LOGIC
+        characterBody.addEventListener('mousedown', () => characterBody.classList.add('squish'));
+        characterBody.addEventListener('mouseup', () => characterBody.classList.remove('squish'));
+        characterBody.addEventListener('mouseleave', () => characterBody.classList.remove('squish'));
+        characterBody.addEventListener('touchstart', () => characterBody.classList.add('squish'), {passive: true});
+        characterBody.addEventListener('touchend', () => characterBody.classList.remove('squish'));
+
+        // BABLI COLOR CHANGE LOGIC
+        const babliThemes = ['', 'theme-pink', 'theme-blue', 'theme-green'];
+        let currentBabliThemeIndex = 0;
+        colorButton.addEventListener('click', () => {
+            if (babliThemes[currentBabliThemeIndex]) { characterBody.classList.remove(babliThemes[currentBabliThemeIndex]); }
+            currentBabliThemeIndex = (currentBabliThemeIndex + 1) % babliThemes.length;
+            if (babliThemes[currentBabliThemeIndex]) { characterBody.classList.add(babliThemes[currentBabliThemeIndex]); }
+        });
+
+        // PAGE THEME SWITCHER LOGIC (UPDATED)
+        const themeSwitcher = document.getElementById('theme-switcher');
+        const pageBody = document.getElementById('page-body');
+        const pageThemes = ['default', 'water-theme', 'metal-theme']; // Added metal theme
+        let currentPageThemeIndex = 0;
+        themeSwitcher.addEventListener('click', () => {
+            pageBody.classList.remove(pageThemes[currentPageThemeIndex]);
+            currentPageThemeIndex = (currentPageThemeIndex + 1) % pageThemes.length;
+            pageBody.classList.add(pageThemes[currentPageThemeIndex]);
+        });
+
+        // RIPPLE EFFECT LOGIC
+        document.querySelectorAll('.action-button').forEach(button => {
+            button.addEventListener('click', function (e) {
+                // Only create ripple if not in metal theme
+                if (!pageBody.classList.contains('metal-theme')) {
+                    const x = e.clientX - e.target.offsetLeft;
+                    const y = e.clientY - e.target.offsetTop;
+                    const ripples = document.createElement('span');
+                    ripples.style.left = x + 'px';
+                    ripples.style.top = y + 'px';
+                    ripples.classList.add('ripple');
+                    this.appendChild(ripples);
+                    setTimeout(() => { ripples.remove() }, 600);
+                }
+            });
+        });
+
+        // --- GEMINI API ---
+        const apiKey = "AIzaSyBLyFM6e8yUoyBjBvsgrDtHyLlGOaE_qDI"; 
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+        async function getGeminiResponse(prompt) { 
+            loadingSpinner.style.display = 'block'; chatBox.scrollTop = chatBox.scrollHeight;
+            if (apiKey === "YOUR_GEMINI_API_KEY_HERE") { loadingSpinner.style.display = 'none'; return "Please replace 'YOUR_GEMINI_API_KEY_HERE' in the code with your actual Gemini API key."; }
+            try {
+                const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) { const errorData = await response.json(); console.error("API Error Details:", errorData); throw new Error(`API error (${response.status}): ${errorData.error?.message || 'Unknown error'}`); }
+                const result = await response.json();
+                if (result.candidates && result.candidates.length > 0) { return result.candidates[0].content.parts[0].text; }
+                return "I'm a little Cotton. Api Error!";
+            } catch (error) { console.error("Gemini API Call Failed:", error); return "Oops! Something went wrong."; } 
+            finally { loadingSpinner.style.display = 'none'; }
+        }
+        function addMessage(text, sender) {
+            const messageElement = document.createElement('div'); messageElement.classList.add('message', sender); messageElement.textContent = text;
+            chatBox.appendChild(messageElement); chatBox.scrollTop = chatBox.scrollHeight;
+        }
+        sendButton.addEventListener('click', async () => {
+            const message = userInput.value.trim(); if (!message) return; addMessage(message, 'user'); userInput.value = '';
+            const prompt = `You are BABLi, a cute, Naughty, thariki An very fluffy, and friendly character made of Cotton. A user is talking to you. Be sweet, curious, and keep your answers very short and cute, like a child would speak, Always add Small Love Poetry in end of msg, Use  "Modern Colloquial Urdu"  "Informal Conversational Urdu" Roman Urdu, use lots of Chat releted emojis every whare in chat, i am also babli call me babli to. User's message: "${message}"`;
+            const botResponse = await getGeminiResponse(prompt); addMessage(botResponse, 'bot');
+        });
+        userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { sendButton.click(); } });
+        storyButton.addEventListener('click', async () => {
+            addMessage("Apny Bary me Kush Btao!", 'user');
+            const prompt = "You are BABLi, a cute, Naughty, Thariki, very fluffy, and friendly character made of Cotton🌨️. Tell a very short (2-3 sentences), happy, and simple story about Old Pakistan And Babli.";
+            const story = await getGeminiResponse(prompt); addMessage(story, 'bot');
+        });
+
+    </script>
+</body>
+</html>
